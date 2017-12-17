@@ -270,14 +270,14 @@ abstract class WriteSequencer<T> {
         public void onNext(T t) {
             produced++;
 
-            doOnNext(t);
-
-            if (upstreamRequested - produced == 0 && requested - produced > 0) {
-                requestFromUpstream(actual);
+            if (doOnNext(t)) {
+                if (upstreamRequested - produced == 0 && requested - produced > 0) {
+                    requestFromUpstream(actual);
+                }
             }
         }
 
-        abstract void doOnNext(T t);
+        abstract boolean doOnNext(T t);
 
         @Override
         public void onSubscribe(Subscription s) {

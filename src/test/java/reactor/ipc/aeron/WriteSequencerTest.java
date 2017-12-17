@@ -91,10 +91,12 @@ public class WriteSequencerTest {
             }
 
             @Override
-            public void doOnNext(String o) {
+            public boolean doOnNext(String o) {
                 log("onNext: " + o);
 
                 signals.add(o);
+
+                return true;
             }
 
             @Override

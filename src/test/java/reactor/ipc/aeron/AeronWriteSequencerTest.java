@@ -42,7 +42,7 @@ public class AeronWriteSequencerTest {
         FakeMessagePublication publication = new FakeMessagePublication();
         publication.publishSuccessfully(4);
 
-        AeronWriteSequencer writeSequencer = new AeronWriteSequencer(scheduler, "test", publication, 1);
+        AeronWriteSequencer writeSequencer = new AeronWriteSequencer(scheduler, "test", publication, 1, 0);
 
         Mono<Void> result1 = writeSequencer.add(ByteBufferFlux.from("Hello", "world"));
         Mono<Void> result2 = writeSequencer.add(ByteBufferFlux.from("All", "good"));
@@ -65,11 +65,15 @@ public class AeronWriteSequencerTest {
     @Test
     public void itSendsNewlyAddedPublisherAfterCurrentIsBackpressured() {
         FakeMessagePublication publication = new FakeMessagePublication();
-        publication.publishSuccessfully(3);
-        publication.failPublication(Publication.BACK_PRESSURED);
         publication.publishSuccessfully(2);
 
-        AeronWriteSequencer writeSequencer = new AeronWriteSequencer(scheduler, "test", publication, 1);
+        publication.publishSuccessfully(1);
+        publication.failPublication(Publication.BACK_PRESSURED);
+        publication.failPublication(Publication.BACK_PRESSURED);
+
+        publication.publishSuccessfully(2);
+
+        AeronWriteSequencer writeSequencer = new AeronWriteSequencer(scheduler, "test", publication, 1, Duration.ofMillis(50).toNanos());
 
         Mono<Void> result1 = writeSequencer.add(ByteBufferFlux.from("Hello", "world"));
         Mono<Void> result2 = writeSequencer.add(ByteBufferFlux.from("1", "2"));
@@ -88,7 +92,7 @@ public class AeronWriteSequencerTest {
 
         StepVerifier.create(result3)
                 .expectComplete()
-                .verify(TIMEOUT);
+                .verify(TIMEOUT.multipliedBy(60));
     }
 
     @Test
@@ -96,7 +100,7 @@ public class AeronWriteSequencerTest {
         FakeMessagePublication publication = new FakeMessagePublication();
         publication.publishSuccessfully(4);
 
-        AeronWriteSequencer writeSequencer = new AeronWriteSequencer(scheduler, "test", publication, 1);
+        AeronWriteSequencer writeSequencer = new AeronWriteSequencer(scheduler, "test", publication, 1, 0);
 
         Scheduler scheduler = Schedulers.single();
         writeSequencer.add(ByteBufferFlux.from("Hello", "world").subscribeOn(scheduler)).subscribe();
@@ -114,7 +118,7 @@ public class AeronWriteSequencerTest {
         FakeMessagePublication publication = new FakeMessagePublication();
         publication.publishSuccessfully(4);
 
-        AeronWriteSequencer writeSequencer = new AeronWriteSequencer(scheduler, "test", publication, 1);
+        AeronWriteSequencer writeSequencer = new AeronWriteSequencer(scheduler, "test", publication, 1, 0);
 
         Scheduler scheduler = Schedulers.single();
         Mono<Void> result1 = writeSequencer.add(
@@ -142,7 +146,7 @@ public class AeronWriteSequencerTest {
         publication.publishSuccessfully(32);
 
         AeronWriteSequencer writeSequencer = new AeronWriteSequencer(
-                scheduler, "test", publication, 1);
+                scheduler, "test", publication, 1, 0);
 
         Mono<Void> result = writeSequencer.add(
                 Flux.range(1, 32)

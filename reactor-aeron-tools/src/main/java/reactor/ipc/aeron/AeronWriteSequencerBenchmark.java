@@ -41,9 +41,10 @@ public class AeronWriteSequencerBenchmark {
 
         Publication publication = aeron.addPublication(channel, 1, "benchmark", 0);
         MessagePublication messagePublication = new DefaultMessagePublication(publication, "benchmark",
-                options.connectTimeoutMillis(), options.backpressureTimeoutMillis());
+                options.connectTimeoutMillis(), 0);
         Scheduler scheduler = Schedulers.single();
-        AeronWriteSequencer sequencer = new AeronWriteSequencer(scheduler, "test", messagePublication, 1);
+        AeronWriteSequencer sequencer = new AeronWriteSequencer(scheduler, "test", messagePublication, 1,
+                options.backpressureTimeoutMillis());
 
         for (int i = 1; i <= nRuns; i++) {
             Publisher<ByteBuffer> publisher = new BenchmarkPublisher(1_000_000, 512);

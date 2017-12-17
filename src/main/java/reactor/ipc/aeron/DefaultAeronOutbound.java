@@ -23,6 +23,7 @@ import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
 import java.nio.ByteBuffer;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Anatoly Kadyshev
@@ -77,8 +78,9 @@ public final class DefaultAeronOutbound implements Disposable, AeronOutbound {
         return Mono.create(sink -> {
             Publication aeronPublication = wrapper.addPublication(channel, streamId, "to send data to", sessionId);
             this.publication = new DefaultMessagePublication(aeronPublication, category,
-                    options.connectTimeoutMillis(), options.backpressureTimeoutMillis());
-            this.sequencer = new AeronWriteSequencer(scheduler, category, publication, sessionId);
+                    options.connectTimeoutMillis(), 0);
+            this.sequencer = new AeronWriteSequencer(scheduler, category, publication, sessionId,
+                    TimeUnit.MILLISECONDS.toNanos(options.backpressureTimeoutMillis()));
             int timeoutMillis = options.connectTimeoutMillis();
             new RetryTask(Schedulers.single(), 100, timeoutMillis, () -> {
                 if (aeronPublication.isConnected()) {
